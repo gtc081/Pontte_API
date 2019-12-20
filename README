@@ -5,6 +5,7 @@ Sobre este projeto: Trata-se de uma API Rest voltada para a criação de contrat
 Objetivos: Teste técnico para vaga de Full Stack - Pleno na empresa Pontte em São Paulo
 
 Pré-requisitos para testar o projeto:
+ - Tutorial base para esse projeto: https://serverless.com/blog/flask-python-rest-api-serverless-lambda-dynamodb/
  - Ter o Serverless instalado
  - Ter uma conta AWS
  - Ter o Serverless configurado para uma conta na AWS
@@ -12,7 +13,6 @@ Pré-requisitos para testar o projeto:
 	- Rodar o comando "npm install --save-dev serverless-wsgi serverless-python-requirements"
  - Ter um Bucket criado no Simple Storage System (S3) dessa AWS
  - Rodar o comando "serverless wsgi serve" para fazer os testes localmente em http://localhost:5000
-
 
 Arquivos importantes na pasta Pontte_API:
  - serverless.yml
