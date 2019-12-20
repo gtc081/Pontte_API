@@ -13,8 +13,11 @@ Pré-requisitos para testar o projeto:
 	- Rodar o comando "npm install --save-dev serverless-wsgi serverless-python-requirements"
  - Ter um Bucket criado no Simple Storage System (S3) dessa AWS
  - Rodar o comando "serverless wsgi serve" para fazer os testes localmente em http://localhost:5000
+ 
+Se tudo estiver instalado corretamente, deverão aparecer tambem as pastas "node_modules" e ".serverless", alem da pasta 
+com o nome do eu ambiente virtual em python e da, sempre presente, __pycache__
 
-Arquivos importantes na pasta Pontte_API:
+Arquivos importantes:
  - serverless.yml
 	- Arquivo de configuração do serverless
  - app.py
