@@ -26,7 +26,7 @@ Arquivos importantes:
  - functions/Functions.py
 	- Arquivo com métodos auxiliares utilizados pelo app.py
  - functions/Html.py
-	- Arquivo que retorna conteudos HTML, como a documentação dos endpoints e a tabela com os contratos
+	- Arquivo que retorna conteudos HTML, como a DOCUMENTAÇÃO dos endpoints e a tabela com os contratos
  - functions/tests.py	
-	- Arquivo com testes unitários das funções do arquivo Functions.py
+	- Arquivo com testes automatizados das funções do arquivo Functions.py. Apenas rode-o para fazer os testes.
 	- Alterar a linha 14 desse arquivo com o nome do Bucket do seu S3
