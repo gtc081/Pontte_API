@@ -83,10 +83,15 @@ class Html:
         
         <h3>/contrato/{estado}</h3>
         <p> - Cria um contrato novo. Válido apenas para o estado 'criar'</p>
-        <p> - PARÂMETROS do POST: JSON (Olhe os ESTADOS mais abaixo para saber quais campos são válidos)</p>
+        <p> - PARÂMETROS do POST(Usando Postman): </p>
+        <p> --- Headers -> Content-Type:multipart/form-data </p>
+        <p> --- Body    -> form-data -> key(file):Caminho do arquivo , value: {arquivo selecionado}</p>
         
         <h3>/contrato/{estado}/{ID do contrato}</h3>
         <p>Adiciona novos elementos a um contrato já criado</p>
+        <p> - PARÂMETROS do POST(Usando Postman): </p>
+        <p> --- Headers -> Content-Type:application/json </p>
+        <p> --- Body    -> raw -> JSON com os campos certos para cada estado. Ver abaixo.</p>
         
         <h2>ESTADOS</h2>
         
@@ -102,8 +107,8 @@ class Html:
         <p> --- Endereço (String)</p>
         
         <h3>cnh/cpf/renda/imagem</h3>
-        <p> - Campo válido para o JSON dos estados "cnh/cpf/renda/imagem"</p>
-        <p> --- Caminho do arquivo (String -> Caminho absoluto do arquivo, com extensão)</p>
+        <p> - Campo válido para o key form-data dos estados "cnh/cpf/renda/imagem"</p>
+        <p> --- Caminho do arquivo</p>
         
         <h3>finalizar</h3>
         <p> - Campo válido para o JSON do estado "finalizar"</p>
