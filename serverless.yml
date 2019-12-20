@@ -1,0 +1,105 @@
+# serverless.yml
+
+service: serverless-flask
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+
+custom:
+  tablContratos: 'TABELA_CONTRATOS'
+  tablCriacao: 'TABELA_CRIACAO'
+  tablUpload: 'TABELA_UPLOAD'
+  wsgi:
+    app: app.app
+    packRequirements: false
+
+provider:
+  name: aws
+  runtime: python3.6
+  stage: dev
+  region: sa-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["ContractDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["CriacaoDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["UploadDynamoDBTable", "Arn" ] }
+  environment:
+    TABELA_CONTRATOS: ${self:custom.tablContratos}
+    TABELA_CRIACAO: ${self:custom.tablCriacao}
+    TABELA_UPLOAD: ${self:custom.tablUpload}
+
+functions:
+  app:
+    handler: wsgi_handler.handler   
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+  createContract:
+    handler: wsgi_handler.handler
+    events:
+      - http: 'GET /contrato/{proxy+}'
+  getContract:
+    handler: wsgi_handler.handler
+    events:
+      - http: 'POST /contrato'
+
+      
+resources:
+  Resources:
+    ContractDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "ID"
+            AttributeType: "S"
+        KeySchema:
+          -
+            AttributeName: "ID"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tablContratos}
+    CriacaoDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "ID"
+            AttributeType: "S"
+        KeySchema:
+          -
+            AttributeName: "ID"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tablCriacao}
+    UploadDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "ID"
+            AttributeType: "S"
+        KeySchema:
+          -
+            AttributeName: "ID"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tablUpload}

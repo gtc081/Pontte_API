@@ -1,0 +1,29 @@
+README file
+
+Sobre este projeto: Trata-se de uma API Rest voltada para a criação de contratos de empréstimos.
+
+Objetivos: Teste técnico para vaga de Full Stack - Pleno na empresa Pontte em São Paulo
+
+Pré-requisitos para testar o projeto:
+ - Ter o Serverless instalado
+ - Ter uma conta AWS
+ - Ter o Serverless configurado para uma conta na AWS
+ - Plugin serverless-wsgi e serverless-python-requirements instalados
+	- Rodar o comando "npm install --save-dev serverless-wsgi serverless-python-requirements"
+ - Ter um Bucket criado no Simple Storage System (S3) dessa AWS
+ - Rodar o comando "serverless wsgi serve" para fazer os testes localmente em http://localhost:5000
+
+
+Arquivos importantes na pasta Pontte_API:
+ - serverless.yml
+	- Arquivo de configuração do serverless
+ - app.py
+	- Arquivo principal, com os endpoints
+	- Alterar a linha 20 desse arquivo com o nome do Bucket do seu S3
+ - functions/Functions.py
+	- Arquivo com métodos auxiliares utilizados pelo app.py
+ - functions/Html.py
+	- Arquivo que retorna conteudos HTML, como a documentação dos endpoints e a tabela com os contratos
+ - functions/tests.py	
+	- Arquivo com testes unitários das funções do arquivo Functions.py
+	- Alterar a linha 14 desse arquivo com o nome do Bucket do seu S3
