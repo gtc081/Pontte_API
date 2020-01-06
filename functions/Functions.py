@@ -29,7 +29,7 @@ class Functions:
             Objeto que acessa o DynamoDB através da biblioteca bot03
             
         TABELA: string, obrigatório
-            Noma da tabela a ser buscada
+            Nome da tabela a ser buscada
             
         ID: string, obrigatório (default=None)
             ID do documento buscado
@@ -93,7 +93,7 @@ class Functions:
             Objeto que acessa o DynamoDB através da biblioteca bot03
             
         tabela: string, obrigatório
-            Noma da tabela a ser alterada
+            Nome da tabela a ser alterada
             
         ID: string, obrigatório (default=None)
             ID do contrato, caso exista
@@ -129,10 +129,10 @@ class Functions:
             Objeto que acessa o DynamoDB através da biblioteca boto3
             
         TABELA_CONTRATOS: string, obrigatório
-            Noma da tabela dos estados dos contratos
+            Nome da tabela dos estados dos contratos
             
         TABELA_CRIACAO: string, obrigatório
-            Noma da tabela do estado de criação dos contratos
+            Nome da tabela do estado de criação dos contratos
             
         ID: string, obrigatório (default=None)
             ID do contrato, caso exista
@@ -327,6 +327,45 @@ class Functions:
             )
             return jsonify(item)
         
+    def analyze_finalize(self,client,TABELA_CONTRATOS,TABELA_UPLOAD,ID,entrada):
+        """
+        Método para analisar se o contrato pode ser finalizado ou não
+
+        Parâmetros
+        ----------
+        
+        client: objeto, obrigatório
+            Objeto que acessa o DynamoDB através da biblioteca boto3
+            
+        TABELA_CONTRATOS: string, obrigatório
+            Nome da tabela dos estados dos contratos
+            
+        TABELA_UPLOAD: string, obrigatório
+            Nome da tabela do estado de arquivos enviados dos contratos
+            
+        ID: string, obrigatório (default=None)
+            ID do contrato
+            
+        entrada: list, obrigatório
+            JSON com as informações que vem do POST
+            O úncio campo válido é(Lembre-se que há distinção entre letras MAIÚSCULAS e MINÚSCULAS):
+                - Status
+
+        Retorno
+        -------
+        
+        STRING
+            string com a confirmação de finalização ou o erro
+        """
+        
+        verifica = self.can_finalize(client,TABELA_UPLOAD,ID)
+
+        if(verifica):
+            retorno = self.finalize(client,TABELA_CONTRATOS,ID,entrada)
+            return retorno
+        else:
+            return "Erro: para finalizar um contrato, faça o upload de um arquivo para CNH ou para o CPF."
+        
     def can_finalize(self,client,TABELA_UPLOAD,ID):
         """
         Método que analisa se é possível finalizar o contrato
@@ -367,7 +406,7 @@ class Functions:
             Objeto que acessa o DynamoDB através da biblioteca boto3
             
         TABELA_CONTRATOS: string, obrigatório
-            Noma da tabela dos estados dos contratos
+            Nome da tabela dos estados dos contratos
             
         ID: string, obrigatório (default=None)
             ID do contrato
@@ -396,6 +435,107 @@ class Functions:
                 novoitem = self.get_contract(client,TABELA_CONTRATOS,ID,'Finalizado')
                 return novoitem
     
+    def create_file(self,client,s3,TABELA_CONTRATOS,TABELA_UPLOAD,BUCKET,entrada,estado,ID):
+        """
+        Método que cria o novo estado de arquivo caso o contrato ja exista mas não possua arquivos ainda
+
+        Parâmetros
+        ----------
+        client: objeto, obrigatório
+            Objeto que acessa o DynamoDB através da biblioteca boto3
+            
+        s3: objeto, obrigatório
+            Objeto que acessa o S3 através da biblioteca boto3
+            
+        TABELA_CONTRATOS: string, obrigatório
+            Nome da tabela dos estados dos contratos
+            
+        TABELA_UPLOAD: string, obrigatório
+            Nome da tabela do estado de arquivos enviados dos contratos
+            
+        BUCKET: string, obrigatório
+            Nome do Bucket da S3 onde serão adicionados os arquivos
+            
+        entrada: list, obrigatório
+            JSON com as informações que vem do POST
+            O úncio campo válido é (Lembre-se que há distinção entre letras MAIÚSCULAS e MINÚSCULAS):
+                - Caminho do arquivo
+
+        estado: string, obrigatório
+            Nome do estado que concatena com o nome do arquivo para gera a chave do mesmo
+            
+        ID: string, obrigatório 
+            ID do contrato
+
+        Retorno
+        -------
+        
+        STRING
+            string de sucesso ou de erro
+        """
+        
+        if not entrada.get('Caminho do arquivo'):
+            return 'Erro: "Caminho do arquivo" não especificado no JSON de entrada'
+    
+        try:
+            nome = self.add_file(s3,BUCKET,entrada,estado,ID)
+
+            self.upload(client,TABELA_CONTRATOS,TABELA_UPLOAD,ID,nome,estado)
+
+            return "UPLOAD DE "+nome+" COM SUCESSO"
+        except Exception:
+            return 'JSON inválido. O formato correto deve ser: {"Caminho do arquivo":"CAMINHO_ABSOLUTO_DO_ARQUIVO_COM_EXTENSÃO"}<br><br> Verifique se o caminho está correto'
+    
+    def update_files(self,client,s3,TABELA_CONTRATOS,TABELA_UPLOAD,BUCKET,entrada,arquivo,estado,ID):
+        """
+        Método que verifica se há algum arquivo naquele campo e o substitui em caso positivo
+
+        Parâmetros
+        ----------
+        client: objeto, obrigatório
+            Objeto que acessa o DynamoDB através da biblioteca boto3
+            
+        s3: objeto, obrigatório
+            Objeto que acessa o S3 através da biblioteca boto3
+            
+        TABELA_CONTRATOS: string, obrigatório
+            Nome da tabela dos estados dos contratos
+            
+        TABELA_UPLOAD: string, obrigatório
+            Nome da tabela do estado de arquivos enviados dos contratos
+            
+        BUCKET: string, obrigatório
+            Nome do Bucket da S3 onde serão adicionados os arquivos
+            
+        entrada: list, obrigatório
+            JSON com as informações que vem do POST
+            O úncio campo válido é (Lembre-se que há distinção entre letras MAIÚSCULAS e MINÚSCULAS):
+                - Caminho do arquivo
+                
+        arquivo: string, obrigatório
+            Nome do arquivo que será retirado do s3
+
+        estado: string, obrigatório
+            Nome do estado que concatena com o nome do arquivo para gera a chave do mesmo
+            
+        ID: string, obrigatório 
+            ID do contrato
+
+        Retorno
+        -------
+        
+        STRING
+            string de sucesso ou de erro
+        """
+        if(arquivo.get(estado) != None):
+            nome = self.update_file(s3,BUCKET,entrada,arquivo.get(estado).get('S'),estado,ID)
+        else:
+            nome = self.add_file(s3,BUCKET,entrada,estado,ID)
+            
+        self.upload(client,TABELA_CONTRATOS,TABELA_UPLOAD,ID,nome,estado)
+        
+        return "UPLOAD DE "+nome+" COM SUCESSO"
+    
     def add_file(self,s3,BUCKET,entrada,estado,ID):
         """
         Método para gravar na tabela de upload as informações sobre o arquivo enviado
@@ -407,7 +547,7 @@ class Functions:
             Objeto que acessa o S3 através da biblioteca boto3
             
         BUCKET: string, obrigatório
-            Noma do Bucket da S3 onde serão adicionados os arquivos
+            Nome do Bucket da S3 onde serão adicionados os arquivos
             
         entrada: list, obrigatório
             JSON com as informações que vem do POST
@@ -415,7 +555,7 @@ class Functions:
                 - Caminho do arquivo
 
         estado: string, obrigatório
-            Noma do estado que concatena com o nome do arquivo para gera a chave do mesmo
+            Nome do estado que concatena com o nome do arquivo para gera a chave do mesmo
 
         Retorno
         -------
@@ -443,7 +583,7 @@ class Functions:
             Objeto que acessa o S3 através da biblioteca boto3
             
         BUCKET: string, obrigatório
-            Noma do Bucket da S3 onde serão adicionados os arquivos
+            Nome do Bucket da S3 onde serão adicionados os arquivos
             
         entrada: list, obrigatório
             JSON com as informações que vem do POST
@@ -454,7 +594,7 @@ class Functions:
             Nome do arquivo que será retirado do s3
             
         estado: string, obrigatório
-            Noma do estado que concatena com o nome do arquivo para gera a chave do mesmo
+            Nome do estado que concatena com o nome do arquivo para gera a chave do mesmo
 
         Retorno
         -------
@@ -468,5 +608,29 @@ class Functions:
         nome_arquivo = self.add_file(s3,BUCKET,entrada,estado,ID)
         
         return nome_arquivo
+    
+    def check_json(self,json,checaCriacaoString):
+        """
+        Método para transformar uma string em JSON. Retorna a propria string em caso de erro
+
+        Parâmetros
+        ----------
+        
+        json: objeto, obrigatório
+            Objeto que transforma a string em JSON
+            
+        checaCriacaoString: string, obrigatório
+            String que será transformada em json
+
+        Retorno
+        -------
+        
+        STRING/JSON
+            string com o que foi enviado ou JSON
+        """
+        try:
+            return json.loads(checaCriacaoString)
+        except Exception:
+            return checaCriacaoString
         
         
