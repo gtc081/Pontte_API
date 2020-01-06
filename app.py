@@ -198,10 +198,8 @@ def update_contract(id_contrato,estado):
             return "ERRO: arquivo enviado. Esperado um JSON"
         
         checaCriacaoString = get_contract(id_contrato,String=True)
-        try:
-            checaCriacao = json.loads(checaCriacaoString)
-        except Exception:
-            return checaCriacaoString
+        
+        checaCriacao = Functions().check_json(json,checaCriacaoString)
         
         if(checaCriacao[0]['Estado'] == 'Finalizado'):
             return "ERRO: Contrato finalizado. Não é possível alterá-lo."
@@ -212,10 +210,8 @@ def update_contract(id_contrato,estado):
     elif(estado == 'cnh' or estado == 'cpf' or estado == 'renda' or estado == 'imagem'):
         
         checaCriacaoString = get_contract(id_contrato,String=True)
-        try:
-            checaCriacao = json.loads(checaCriacaoString)
-        except Exception:
-            return checaCriacaoString   
+        
+        checaCriacao = Functions().check_json(json,checaCriacaoString)
         
         if not 'Caminho do arquivo' in request.files:
             return "ERRO: nenhum arquivo recebido"
@@ -224,19 +220,8 @@ def update_contract(id_contrato,estado):
 
         if (checaCriacao[0]['Estado'] == 'criar'):
             
-            if not entrada.get('Caminho do arquivo'):
-                return 'Erro: "Caminho do arquivo" não especificado no JSON de entrada'
-        
-            try:
-                nome = Functions().add_file(s3,BUCKET,entrada,estado,id_contrato)
-
-                json_resposta = Functions().upload(client,TABELA_CONTRATOS,TABELA_UPLOAD,checaCriacao[0]['ID'],nome,estado)
-
-                return "UPLOAD DE "+nome+" COM SUCESSO"
-            except Exception as error:
-                return error
-                return 'JSON inválido. O formato correto deve ser: {"Caminho do arquivo":"CAMINHO_ABSOLUTO_DO_ARQUIVO_COM_EXTENSÃO"}<br><br> Verifique se o caminho está correto'
-            
+            return Functions().create_file(client, s3, TABELA_CONTRATOS, TABELA_UPLOAD, BUCKET, entrada, estado, id_contrato)
+ 
         elif(checaCriacao[0]['Estado'] == 'cnh' or checaCriacao[0]['Estado'] == 'cpf' or checaCriacao[0]['Estado'] == 'renda' or checaCriacao[0]['Estado'] == 'imagem'):
             
             if not entrada.get('Caminho do arquivo'):
@@ -246,16 +231,9 @@ def update_contract(id_contrato,estado):
                 
                 arquivo = get_contract_by_state(id_contrato,estado,True)
                 
-                if(arquivo.get(estado) != None):
-                    nome = Functions().update_file(s3,BUCKET,entrada,arquivo.get(estado).get('S'),estado,id_contrato)
-                else:
-                    nome = Functions().add_file(s3,BUCKET,entrada,estado,id_contrato)
-                    
-                json_resposta = Functions().upload(client,TABELA_CONTRATOS,TABELA_UPLOAD,checaCriacao[0]['ID'],nome,estado)
+                return Functions().update_files(client, s3, TABELA_CONTRATOS, TABELA_UPLOAD, BUCKET, entrada, arquivo, estado, id_contrato)
                 
-                return "UPLOAD DE "+nome+" COM SUCESSO"
-            except Exception as error:
-                return error
+            except Exception:
                 return 'JSON inválido. O formato carreto deve ser: {"Caminho do arquivo":"CAMINHO_ABSOLUTO_DO_ARQUIVO_COM_EXTENSÃO"}<br><br> Verifique se o caminho está correto'
             
         else:
@@ -266,13 +244,7 @@ def update_contract(id_contrato,estado):
         if 'Caminho do arquivo' in request.files:
             return "ERRO: arquivo enviado. Esperado um JSON"
         
-        verifica = Functions().can_finalize(client,TABELA_UPLOAD,id_contrato)
-
-        if(verifica):
-            retorno = Functions().finalize(client,TABELA_CONTRATOS,id_contrato,entrada)
-            return retorno
-        else:
-            return "Erro: para finalizar um contrato, faça o upload de um arquivo para CNH ou para o CPF."
+        return Functions().analyze_finalize(client, TABELA_CONTRATOS, TABELA_UPLOAD, id_contrato, entrada)
 
     else:
         return "ERRO: ESTADO INVÁLIDO"
