@@ -28,5 +28,5 @@ sls==0.4.0
 story-hub==0.2.0
 storyscript==0.25.7
 tornado==6.0.3
-urllib3==1.25.7
+urllib3==1.25.8
 Werkzeug==0.16.0
